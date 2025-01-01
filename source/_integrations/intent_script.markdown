@@ -122,5 +122,43 @@ intent_script:
     speech:
       text: "{{ action_response['calendar.my_calendar'].events | length }}"   # use the action's response
 ```
+  DoorsOpen:
+    speech:
+      text: >
+        {% set doors = state_attr('group.all_doors', 'entity_id') %}
+        {% set allDoorsClosed = expand(doors) | selectattr('state','in',['tripped']) 
+          | list | map(attribute='name') | join(', ') %}
 
+          {% if allDoorsClosed %}
+          The following doors are open: {{ allDoorsClosed | default('All Doors are Closed', 1) }}
+        {% else %}
+          All doors are closed
+        {% endif %}
 {% endraw %}
+
+
+  FanPercentOn:
+    speech:
+      text: "{{ state_attr(fanname, 'friendly_name') }} is set to {{ percent }} percent"       
+    action:
+      - action: fan.set_percentage
+        data:
+          percentage: "{{ percent }}"
+        target:
+          entity_id: "{{ fanname }}"
+
+
+  HvacStatus:
+    speech:
+      text: >
+         "The HVAC status is {{ states('text.hvac_system_status') }} and the 
+         mode is set to {{ states('select.hvac_mode_selection') }}
+         {% set allrooms = state_attr('group.all_climate_rooms', 'entity_id') %}
+         {% set HVACRooms = expand(allrooms) | selectattr('attributes.hvac_action','in',['heating','cooling']) 
+          | list | map(attribute='name') | join(', ') %}
+
+          {% if HVACRooms %}
+           The following dampers are open: {{ HVACRooms  | default('None', 1) }}
+          {% endif %}          
+
+
